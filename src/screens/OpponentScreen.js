@@ -1,92 +1,99 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  Button,
-  Alert,
-  ScrollView,
-  FlatList,
-} from "react-native";
+import { StyleSheet, Text, View, Alert, FlatList } from "react-native";
 import React, { useEffect, useState } from "react";
+import Title from "../components/ui/Title";
+import NumberContainer from "../components/game/NumberContainer";
+import PrimaryButton from "../components/ui/PrimaryButton";
+import InstructionText from "../components/ui/InstructionText";
+import Card from "../components/ui/Card";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import GuessLogItem from "../components/game/GuessLogItem";
 
-const OpponentScreen = ({ route, navigation }) => {
-  const { myNumber } = route.params;
-  const [opponentGuess, setOpponentGuess] = useState(0);
-  const [refreshkey, setRefreshkey] = useState(0);
-  const [guessList, setGuessList] = useState([]);
+const generateRandomNumber = (min, max, exclude) => {
+  const randomNumber = Math.floor(Math.random() * (max - min) + min);
+  if (randomNumber === exclude) {
+    return generateRandomNumber(min, max, exclude);
+  } else {
+    return randomNumber;
+  }
+};
 
-  const opponentNumber = () => {
-    const randomNumber = Math.floor(Math.random() * 9) + 1;
-    setOpponentGuess(randomNumber);
-    setGuessList((previousList) => [randomNumber, ...previousList]);
-  };
+const OpponentScreen = ({ userNumber, onGameOver }) => {
+  const initialGuess = generateRandomNumber(1, 100, userNumber);
+  const [currentGuess, setCurrentGuess] = useState(initialGuess);
+  const [guessRounds, setGuessRounds] = useState([initialGuess]);
 
   useEffect(() => {
-    opponentNumber();
-  }, [refreshkey]);
-
-  const gameOver = () => {
-    navigation.navigate("GameStart");
-  };
-
-  const lowerOnClick = () => {
-    if (opponentGuess > 0 && opponentGuess < myNumber) {
-      setRefreshkey(refreshkey + 1);
-    } else {
-      Alert.alert("Don't lie! You Know that this wrong...");
+    if (currentGuess === userNumber) {
+      onGameOver(guessRounds.length);
     }
-  };
-  const higherOnClick = () => {
-    if (opponentGuess > 0 && opponentGuess > myNumber) {
-      setRefreshkey(refreshkey + 1);
-    } else {
-      Alert.alert("Dont lie! You Know that this wrong...");
+  }, [currentGuess, userNumber, onGameOver]);
+
+  useEffect(() => {
+    minBoundary = 1;
+    maxBoundary = 100;
+  }, []);
+
+  const nextGuessHandler = (direction) => {
+    if (
+      (direction === "lower" && currentGuess < userNumber) ||
+      (direction === "higher" && currentGuess > userNumber)
+    ) {
+      Alert.alert("Don't lie", "You know that this is wrong", [
+        { text: "Sorry!", style: "cancel" },
+      ]);
+      return;
     }
+    if (direction === "lower") {
+      maxBoundary = currentGuess;
+    } else {
+      minBoundary = currentGuess + 1;
+    }
+
+    const newRandomNumber = generateRandomNumber(
+      minBoundary,
+      maxBoundary,
+      currentGuess
+    );
+    setCurrentGuess(newRandomNumber);
+    setGuessRounds((previousRounds) => [newRandomNumber, ...previousRounds]);
   };
 
-  console.log(opponentGuess, myNumber);
-
-  if (opponentGuess == myNumber) {
-    navigation.navigate("GameOver", { myNumber });
-  }
-
+  const guessRoundsListLength = guessRounds.length;
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Opponent's Guess</Text>
-      </View>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>{opponentGuess}</Text>
-      </View>
-      <View style={styles.body}>
-        <Text style={styles.bodyText}>Higher or Lower?</Text>
-        <View></View>
+    <View style={styles.screen}>
+      <Title>Opponent's Guess</Title>
+      <NumberContainer>{currentGuess}</NumberContainer>
 
-        <View style={styles.buttons}>
-          <View style={styles.button1}>
-            <Button title="-" onPress={lowerOnClick} />
+      <Card>
+        <InstructionText style={styles.innerText}>
+          Higher or Lower?
+        </InstructionText>
+        <View style={styles.buttonsContainer}>
+          <View style={styles.buttonContainer}>
+            <PrimaryButton onPress={nextGuessHandler.bind(this, "lower")}>
+              <Ionicons name="remove" size={20} color="white" />
+            </PrimaryButton>
           </View>
-          <View style={styles.button2}>
-            <Button title="+" onPress={higherOnClick} />
+          <View style={styles.buttonContainer}>
+            <PrimaryButton onPress={nextGuessHandler.bind(this, "higher")}>
+              <Ionicons name="add" size={20} color="white" />
+            </PrimaryButton>
           </View>
         </View>
+      </Card>
+      <View style={styles.listContainer}>
+        <FlatList
+          data={guessRounds}
+          renderItem={(itemData) => (
+            <GuessLogItem
+              roundNumber={guessRoundsListLength - itemData.index}
+              guess={itemData.item}
+            />
+          )}
+          keyExtractor={(item) => item}
+          showsVerticalScrollIndicator={false}
+        />
       </View>
-      <FlatList
-        data={guessList}
-        renderItem={({ item, index }) => (
-          <View style={styles.guessList}>
-            <View>
-              <Text>#{guessList.length - index}</Text>
-            </View>
-            <View>
-              <Text>Opponent's Guess: {item}</Text>
-            </View>
-          </View>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-        showsVerticalScrollIndicator={false}
-      />
     </View>
   );
 };
@@ -94,58 +101,21 @@ const OpponentScreen = ({ route, navigation }) => {
 export default OpponentScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    paddingTop: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    margin: 15,
+    padding: 25,
   },
-  header: {
-    borderWidth: 2,
-    marginBottom: 10,
-    alignItems: "center",
-    width: "100%",
+  innerText: {
+    marginBottom: 12,
   },
-  headerText: {
-    padding: 10,
-    fontSize: 24,
+  buttonsContainer: {
+    flexDirection: "row",
   },
-  body: {
-    borderWidth: 2,
-    alignItems: "center",
-    width: "100%",
+  buttonContainer: {
+    flex: 1,
+  },
+  listContainer: {
+    flex: 1,
     padding: 16,
-  },
-  bodyText: {
-    padding: 10,
-    fontSize: 18,
-  },
-  input: {
-    borderWidth: 1,
-    padding: 8,
-    marginBottom: 16,
-    width: 100,
-    textAlign: "center",
-  },
-  buttons: {
-    flexDirection: "row",
-    margin: 15,
-  },
-  button1: {
-    width: 80,
-    marginRight: 16,
-  },
-  button2: {
-    width: 80,
-  },
-  guessList: {
-    flexDirection: "row",
-    padding: 10,
-    justifyContent: "space-between",
-    width: "100%",
-    borderWidth: 1,
-    marginTop: 15,
-    borderRadius: 20,
   },
 });

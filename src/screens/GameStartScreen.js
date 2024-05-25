@@ -1,49 +1,59 @@
 import { StyleSheet, Text, View, TextInput, Button, Alert } from "react-native";
 import React, { useState } from "react";
+import PrimaryButton from "../components/ui/PrimaryButton";
+import Colors from "../constants/colors";
+import Title from "../components/ui/Title";
+import Card from "../components/ui/Card";
+import InstructionText from "../components/ui/InstructionText";
 
-const GameStartScreen = ({ navigation }) => {
-  const [myNumber, setMyNumber] = useState(0);
+const GameStartScreen = ({ onPickNumberHandler }) => {
+  const [enteredNumber, SetEnteredNumber] = useState("");
 
-  const resetNumber = () => {
-    setMyNumber("");
+  const inputHandler = (enteredText) => {
+    SetEnteredNumber(enteredText);
   };
-  const onConfirmClick = () => {
-    const num = parseInt(myNumber, 10);
-    if (num > 0 && num < 100) {
-      navigation.navigate("Opponent", { myNumber: num });
-      resetNumber();
-    } else {
-      Alert.alert("Invalid Number! Please enter a number between 1 and 99");
-      resetNumber();
+
+  const confirmButtonHandler = () => {
+    const choosenNumber = parseInt(enteredNumber);
+    if (isNaN(choosenNumber) || choosenNumber <= 0 || choosenNumber > 99) {
+      Alert.alert(
+        "Invalid Number!",
+        "Please Choose a Number Between 1 and 99",
+        [{ onPress: resetButtonHandler }]
+      );
+      return;
     }
+    onPickNumberHandler(choosenNumber);
   };
 
+  const resetButtonHandler = () => {
+    SetEnteredNumber("");
+  };
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Guess My Number</Text>
-      </View>
-      <View style={styles.body}>
-        <Text style={styles.bodyText}>Enter a Number</Text>
-        <View>
-          <TextInput
-            style={styles.input}
-            placeholder="_____"
-            value={myNumber}
-            onChangeText={(value) => setMyNumber(value)}
-            keyboardType="number-pad"
-          />
-        </View>
-
-        <View style={styles.buttons}>
-          <View style={styles.button1}>
-            <Button title="Reset" onPress={resetNumber} />
+    <View style={styles.rootContainer}>
+      <Title>Guess the Number</Title>
+      <Card>
+        <InstructionText>Enter a Number</InstructionText>
+        <TextInput
+          style={styles.textInput}
+          maxLength={2}
+          keyboardType="number-pad"
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={enteredNumber}
+          onChangeText={inputHandler}
+        ></TextInput>
+        <View style={styles.buttonsContainer}>
+          <View style={styles.buttonContainer}>
+            <PrimaryButton onPress={resetButtonHandler}>Reset</PrimaryButton>
           </View>
-          <View>
-            <Button title="Confirm" onPress={onConfirmClick} />
+          <View style={styles.buttonContainer}>
+            <PrimaryButton onPress={confirmButtonHandler}>
+              Confirm
+            </PrimaryButton>
           </View>
         </View>
-      </View>
+      </Card>
     </View>
   );
 };
@@ -51,45 +61,26 @@ const GameStartScreen = ({ navigation }) => {
 export default GameStartScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  rootContainer: {
     flex: 1,
-    padding: 16,
-    justifyContent: "center",
+    marginTop: 100,
     alignItems: "center",
   },
-  header: {
-    borderWidth: 2,
-    marginBottom: 10,
+
+  textInput: {
+    height: 50,
+    width: 50,
+    color: Colors.accent500,
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.accent500,
+    fontSize: 32,
+    marginVertical: 8,
     alignItems: "center",
-    width: "100%",
   },
-  headerText: {
-    padding: 10,
-    fontSize: 24,
-  },
-  body: {
-    borderWidth: 2,
-    alignItems: "center",
-    width: "100%",
-    padding: 16,
-  },
-  bodyText: {
-    padding: 10,
-    fontSize: 18,
-  },
-  input: {
-    borderWidth: 1,
-    padding: 8,
-    marginBottom: 16,
-    width: 100,
-    textAlign: "center",
-  },
-  buttons: {
+  buttonsContainer: {
     flexDirection: "row",
-    margin: 15,
   },
-  button1: {
-    marginRight: 16,
-    width: 80,
+  buttonContainer: {
+    flex: 1,
   },
 });
