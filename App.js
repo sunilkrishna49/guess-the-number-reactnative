@@ -7,17 +7,20 @@ import Colors from "./src/constants/colors";
 import GameOverScreen from "./src/screens/GameOverScreen";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 
 export default function App() {
   const [userNumber, setUserNumber] = useState();
   const [gameOver, setGameOver] = useState(true);
   const [guessRounds, setGuessRounds] = useState(0);
 
+  // Step 1: Load Fonts
   const [fontsLoaded] = useFonts({
     "open-sans": require("./assets/fonts/OpenSans-Regular.ttf"),
     "open-sans-bold": require("./assets/fonts/OpenSans-Bold.ttf"),
   });
 
+  // Step 2: Prevent Auto-Hiding the Splash Screen
   useEffect(() => {
     async function prepare() {
       try {
@@ -29,11 +32,13 @@ export default function App() {
     prepare();
   }, []);
 
+  // Step 3: Hide the Splash Screen When Fonts are Loaded
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+  // Step 4: Render the App or Loading Indicator
   if (!fontsLoaded) {
     return null;
   }
@@ -70,19 +75,22 @@ export default function App() {
   }
 
   return (
-    <LinearGradient
-      colors={[Colors.primary600, Colors.accent500]}
-      style={styles.rootScreen}
-    >
-      <ImageBackground
-        source={require("./assets/images/dice.jpg")}
-        resizeMode="cover"
+    <>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={[Colors.primary600, Colors.accent500]}
         style={styles.rootScreen}
-        imageStyle={styles.backgroundImage}
       >
-        <SafeAreaView style={styles.rootScreen}>{screen}</SafeAreaView>
-      </ImageBackground>
-    </LinearGradient>
+        <ImageBackground
+          source={require("./assets/images/dice.jpg")}
+          resizeMode="cover"
+          style={styles.rootScreen}
+          imageStyle={styles.backgroundImage}
+        >
+          <SafeAreaView style={styles.rootScreen}>{screen}</SafeAreaView>
+        </ImageBackground>
+      </LinearGradient>
+    </>
   );
 }
 
